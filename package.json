@@ -1,0 +1,18 @@
+{
+  "name": "alpha-adventures-backend",
+  "version": "1.0.0",
+  "description": "Creating a backed for a Treking website For Alpha Adventures",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "author": "Niket",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.3"
+  },
+  "dependencies": {
+    "prettier": "^3.3.2"
+  }
+}
