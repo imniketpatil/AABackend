@@ -12,5 +12,5 @@ connectDB()
   })
 
   .catch((error) => {
-    console.log("\n\nMONGO DB CONNECTION FAILED !!! \n\n", error);
+    console.log("\nMONGO DB CONNECTION FAILED !!! \n", error);
   });
