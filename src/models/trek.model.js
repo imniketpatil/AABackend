@@ -13,7 +13,7 @@ const trekSchema = new Schema({
   },
   price: { type: Number, required: true },
   trekType: { type: Schema.Types.ObjectId, ref: "TrekType", required: true },
-  createdAt: { type: Date, default: Date.now },
+  startDate: { type: Date, default: Date.now },
   guides: [{ type: Schema.Types.ObjectId, ref: "TrekGuide" }],
   images: [{ type: String }], // Array of image URLs
 });
