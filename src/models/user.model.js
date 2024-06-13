@@ -14,13 +14,6 @@ const userSchema = new Schema({
     unique: true,
     trim: true,
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    match: [/@/, "Please fill a valid email address"],
-  },
   password: {
     type: String,
     required: true,
@@ -36,7 +29,7 @@ userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) {
       return next();
     }
-    this.password = bcrypt.hash(this.password, 10);
+    this.password = await bcrypt.hash(this.password, 10);
     next();
   } catch (error) {}
 });
@@ -50,7 +43,6 @@ userSchema.methods.generateAccessToken = async function () {
     {
       _id: this_id,
       email: this.email,
-      username: this.username,
       fullName: this.fullName,
     },
     process.env.ACCESS_TOKEN_SECRET,
