@@ -38,10 +38,10 @@ userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-userSchema.methods.generateAccessToken = async function () {
-  return await jwt.sign(
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
     {
-      _id: this_id,
+      _id: this._id,
       email: this.email,
       fullName: this.fullName,
     },
@@ -52,10 +52,10 @@ userSchema.methods.generateAccessToken = async function () {
   );
 };
 
-userSchema.methods.generateRefreshToken = async function () {
-  return await jwt.sign(
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
     {
-      _id: this_id,
+      _id: this._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
