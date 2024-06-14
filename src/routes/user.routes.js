@@ -6,10 +6,11 @@ import {
   refreshAccessToken,
 } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleaware.js";
+import { verifyAdmin } from "../middlewares/adminAuth.middleware.js";
 
 const router = Router();
 
-router.route("/register").post(registerUser);
+router.route("/register").post(verifyAdmin, registerUser);
 
 router.route("/login").post(loginUser);
 
