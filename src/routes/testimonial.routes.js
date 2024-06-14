@@ -13,3 +13,5 @@ router.route("/create-testimonial").post(
   ]),
   createTestimonial
 );
+
+export default router;

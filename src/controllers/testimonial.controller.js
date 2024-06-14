@@ -1,5 +1,4 @@
-import { image } from "qr-image";
-import { Testimonial } from "../models/user.model.js";
+import { Testimonial } from "../models/testimonial.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";

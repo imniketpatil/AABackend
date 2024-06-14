@@ -17,8 +17,9 @@ app.use(cookieParser());
 
 //routes
 import userRouter from "./routes/user.routes.js";
-
+import testimonialRouter from "./routes/testimonial.routes.js";
 //routes declearation
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/testimonial", testimonialRouter);
 
 export { app };

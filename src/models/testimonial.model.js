@@ -8,4 +8,4 @@ const testimonialSchema = new Schema({
   images: [{ type: String, required: true }], // Array of image URLs
 });
 
-const Testimonial = mongoose.model("Testimonial", testimonialSchema);
+export const Testimonial = mongoose.model("Testimonial", testimonialSchema);
