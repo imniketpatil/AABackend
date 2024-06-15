@@ -46,4 +46,68 @@ const createTestimonial = asyncHandler(async (req, res) => {
     );
 });
 
-export { createTestimonial };
+const updateTestimonialDetails = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name, trek, rating, comment } = req.body;
+
+  console.log("Request body:", req.body);
+  console.log("Uploaded files:", req.files);
+
+  if (
+    !req.files ||
+    !req.files.testimonialAvatar ||
+    !req.files.testimonialAvatar[0]
+  ) {
+    throw new ApiError(400, "Image File is Required");
+  }
+
+  const testimonialImageLocalPath = req.files.testimonialAvatar[0].path;
+  console.log("Local image path:", testimonialImageLocalPath);
+
+  let imageOnCloudinary;
+  try {
+    imageOnCloudinary = await uploadOnCloudinary(testimonialImageLocalPath);
+    console.log("Image uploaded to Cloudinary:", imageOnCloudinary);
+  } catch (error) {
+    console.error("Error uploading image to Cloudinary:", error);
+    throw new ApiError(500, "Image upload failed");
+  }
+
+  if (!imageOnCloudinary) {
+    throw new ApiError(500, "Image File Didn't Upload");
+  }
+
+  const testimonial = await Testimonial.findByIdAndUpdate(
+    id,
+    {
+      name,
+      trek,
+      rating,
+      comment,
+      images: imageOnCloudinary.url,
+    },
+    { new: true }
+  );
+
+  if (!testimonial) {
+    throw new ApiError(500, "Something Went wrong while updating Testimonial");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, testimonial, "Testimonial Updated Successfully")
+    );
+});
+
+const deleteTestimonial = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  await Testimonial.findByIdAndDelete(id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Testimonial Deleted Successfully"));
+});
+
+export { createTestimonial, updateTestimonialDetails, deleteTestimonial };
