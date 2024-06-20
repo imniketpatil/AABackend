@@ -11,8 +11,8 @@ const trekSchema = new Schema({
     enum: ["easy", "moderate", "hard"],
     required: true,
   },
-  price: { type: Number, required: true },
   trekType: { type: Schema.Types.ObjectId, ref: "TrekType", required: true },
+  price: { type: Number, required: true },
   startDate: { type: Date, default: Date.now },
   guides: [{ type: Schema.Types.ObjectId, ref: "TrekGuide" }],
   images: [{ type: String }], // Array of image URLs
