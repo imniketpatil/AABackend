@@ -12,7 +12,7 @@ router.route("/add-trek-type").post(
   upload.fields([
     {
       name: "trekTypeImage",
-      maxCount: 1,
+      maxCount: 6,
     },
   ]),
   addTrekType

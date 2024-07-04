@@ -3,10 +3,12 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Trek } from "../models/trek.model.js";
+import { TrekGuide } from "../models/trekguide.model.js";
 
 const addTrek = asyncHandler(async (req, res) => {
   const {
     name,
+    subDescription,
     description,
     location,
     duration,
@@ -21,6 +23,7 @@ const addTrek = asyncHandler(async (req, res) => {
   if (
     [
       name,
+      subDescription,
       description,
       location,
       duration,
@@ -52,6 +55,7 @@ const addTrek = asyncHandler(async (req, res) => {
 
   const trek = await Trek.create({
     name,
+    subDescription,
     description,
     location,
     duration,
@@ -72,4 +76,41 @@ const addTrek = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, trek, "TrekType created successfully"));
 });
 
-export { addTrek };
+const aggregateTrekWithGuides = asyncHandler(async (req, res) => {
+  const trekWithGuide = await Trek.aggregate([
+    {
+      $lookup: {
+        from: "trekguides", // The name of the TrekGuide collection in the database
+        localField: "guides", // The field in the Trek collection that contains references to TrekGuide
+        foreignField: "_id", // The field in the TrekGuide collection to join on
+        as: "guideDetails", // The name of the field to add to the Trek documents with the matched guide details
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        subDescription: 1,
+        description: 1,
+        location: 1,
+        duration: 1,
+        difficulty: 1,
+        trekType: 1,
+        price: 1,
+        startDate: 1,
+        images: 1,
+        guideDetails: {
+          name: 1,
+          bio: 1,
+          experience: 1,
+          images: 1,
+        },
+      },
+    },
+  ]);
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, trekWithGuide, "TrekWithGuide successfull"));
+});
+
+export { addTrek, aggregateTrekWithGuides };

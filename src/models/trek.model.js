@@ -3,6 +3,7 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const trekSchema = new Schema({
   name: { type: String, required: true },
+  subDescription: { type: String, required: true },
   description: { type: String, required: true },
   location: { type: String, required: true },
   duration: { type: Number, required: true },
@@ -11,7 +12,7 @@ const trekSchema = new Schema({
     enum: ["easy", "moderate", "hard"],
     required: true,
   },
-  trekType: { type: Schema.Types.ObjectId, ref: "TrekType", required: true },
+  trekType: { type: Schema.Types.ObjectId, ref: "TrekType", required: false },
   price: { type: Number, required: true },
   startDate: { type: Date, default: Date.now },
   guides: [{ type: Schema.Types.ObjectId, ref: "TrekGuide" }],
