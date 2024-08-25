@@ -5,11 +5,13 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const createTestimonial = asyncHandler(async (req, res) => {
-  const { name, trek, rating, comment } = req.body;
+  const { name, trek, work, rating, comment } = req.body;
   console.log("Request body:", req.body);
   console.log("Uploaded files:", req.files);
 
-  if ([name, trek, rating, comment].some((field) => field?.trim() === "")) {
+  if (
+    [name, trek, work, rating, comment].some((field) => field?.trim() === "")
+  ) {
     throw new ApiError(400, "All fields are required");
   }
 
@@ -30,6 +32,7 @@ const createTestimonial = asyncHandler(async (req, res) => {
   const testimonial = await Testimonial.create({
     name,
     trek,
+    work,
     rating,
     comment,
     images: imageOnCloudinary.url,
@@ -48,20 +51,16 @@ const createTestimonial = asyncHandler(async (req, res) => {
 
 const updateTestimonialDetails = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { name, trek, rating, comment } = req.body;
+  const { name, trek, work, rating, comment } = req.body;
 
   console.log("Request body:", req.body);
-  console.log("Uploaded files:", req.files);
+  console.log("Uploaded files:", req.file); // Use req.file if using upload.single
 
-  if (
-    !req.files ||
-    !req.files.testimonialAvatar ||
-    !req.files.testimonialAvatar[0]
-  ) {
-    throw new ApiError(400, "Image File is Required");
+  if (!req.file) {
+    throw new ApiError(400, "No file uploaded");
   }
 
-  const testimonialImageLocalPath = req.files.testimonialAvatar[0].path;
+  const testimonialImageLocalPath = req.file.path;
   console.log("Local image path:", testimonialImageLocalPath);
 
   let imageOnCloudinary;
@@ -78,10 +77,11 @@ const updateTestimonialDetails = asyncHandler(async (req, res) => {
   }
 
   const testimonial = await Testimonial.findByIdAndUpdate(
-    id,
+    id, // Use the id to find the document
     {
       name,
       trek,
+      work,
       rating,
       comment,
       images: imageOnCloudinary.url,
@@ -90,7 +90,7 @@ const updateTestimonialDetails = asyncHandler(async (req, res) => {
   );
 
   if (!testimonial) {
-    throw new ApiError(500, "Something Went wrong while updating Testimonial");
+    throw new ApiError(500, "Something Went Wrong While Updating Testimonial");
   }
 
   return res
@@ -110,4 +110,40 @@ const deleteTestimonial = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Testimonial Deleted Successfully"));
 });
 
-export { createTestimonial, updateTestimonialDetails, deleteTestimonial };
+const getAllTestimonials = asyncHandler(async (req, res) => {
+  const testimonial = await Testimonial.find();
+
+  if (!testimonial || testimonial.length === 0) {
+    throw new ApiError(404, "No Trek Type Found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, testimonial, "Trek Type Retrieved Successfully")
+    );
+});
+
+const getAllTestimonial = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const testimonial = await Testimonial.findById(id);
+
+  if (!testimonial || testimonial.length === 0) {
+    throw new ApiError(404, "No Trek Type Found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, testimonial, "Trek Type Retrieved Successfully")
+    );
+});
+
+export {
+  createTestimonial,
+  updateTestimonialDetails,
+  deleteTestimonial,
+  getAllTestimonials,
+  getAllTestimonial,
+};

@@ -5,9 +5,11 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const addGuide = asyncHandler(async (req, res) => {
-  const { name, bio, experience } = req.body;
+  const { name, bio, experience, instagramId } = req.body;
 
-  if ([name, bio, experience].some((field) => field?.trim() === "")) {
+  if (
+    [name, bio, experience, instagramId].some((field) => field?.trim() === "")
+  ) {
     throw new ApiError(400, "All fields are required");
   }
 
@@ -29,6 +31,7 @@ const addGuide = asyncHandler(async (req, res) => {
     name,
     bio,
     experience,
+    instagramId,
     images: imageOnCloudinary.url,
   });
 
@@ -43,49 +46,54 @@ const addGuide = asyncHandler(async (req, res) => {
 
 const editGuide = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { name, bio, experience } = req.body;
+  const { name, bio, experience, instagramId } = req.body;
 
   console.log("Request body:", req.body);
   console.log("Uploaded files:", req.files);
 
-  if (!req.files || !req.files.guideAvatar || !req.files.guideAvatar[0]) {
-    throw new ApiError(400, "Image File is Required");
-  }
-
-  const guideImageLocalPath = req.files.guideAvatar[0].path;
-  console.log("Local image path:", guideImageLocalPath);
-
   let imageOnCloudinary;
-  try {
-    imageOnCloudinary = await uploadOnCloudinary(guideImageLocalPath);
-    console.log("Image uploaded to Cloudinary:", imageOnCloudinary);
-  } catch (error) {
-    console.error("Error uploading image to Cloudinary:", error);
-    throw new ApiError(500, "Image upload failed");
+
+  // Check if a new image is uploaded
+  if (req.files && req.files.guideAvatar && req.files.guideAvatar[0]) {
+    const guideImageLocalPath = req.files.guideAvatar[0].path;
+    console.log("Local image path:", guideImageLocalPath);
+
+    try {
+      imageOnCloudinary = await uploadOnCloudinary(guideImageLocalPath);
+      console.log("Image uploaded to Cloudinary:", imageOnCloudinary);
+    } catch (error) {
+      console.error("Error uploading image to Cloudinary:", error);
+      throw new ApiError(500, "Image upload failed");
+    }
+
+    if (!imageOnCloudinary) {
+      throw new ApiError(500, "Image File Didn't Upload");
+    }
   }
 
-  if (!imageOnCloudinary) {
-    throw new ApiError(500, "Image File Didn't Upload");
+  // Fetch existing guide data from database
+  const existingGuide = await TrekGuide.findById(id);
+  if (!existingGuide) {
+    throw new ApiError(404, "Guide not found");
   }
 
-  const trekguide = await TrekGuide.findByIdAndUpdate(
-    id,
-    {
-      name,
-      bio,
-      experience,
-      images: imageOnCloudinary.url,
-    },
-    { new: true }
-  );
+  // Update guide data
+  existingGuide.name = name;
+  existingGuide.bio = bio;
+  existingGuide.experience = experience;
+  existingGuide.instagramId = instagramId;
 
-  if (!trekguide) {
-    throw new ApiError(500, "Something Went wrong while updating Guide");
+  // Set images field based on upload status
+  if (imageOnCloudinary) {
+    existingGuide.images = imageOnCloudinary.url;
   }
+
+  // Save updated guide data
+  const updatedGuide = await existingGuide.save();
 
   return res
     .status(200)
-    .json(new ApiResponse(200, trekguide, "Guide Updated Successfully"));
+    .json(new ApiResponse(200, updatedGuide, "Guide Updated Successfully"));
 });
 
 const deleteGuide = asyncHandler(async (req, res) => {
@@ -98,4 +106,30 @@ const deleteGuide = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Guide Deleted Successfully"));
 });
 
-export { addGuide, editGuide, deleteGuide };
+const getAllGuides = asyncHandler(async (req, res) => {
+  const guides = await TrekGuide.find();
+
+  if (!guides) {
+    throw new ApiError(404, "No guides found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, guides, "Guides retrieved successfully"));
+});
+
+const getGuideById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const guide = await TrekGuide.findById(id);
+
+  if (!guide) {
+    throw new ApiError(404, "Guide Not Found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, guide, "Guide Fetched Successfully"));
+});
+
+export { addGuide, editGuide, deleteGuide, getAllGuides, getGuideById };

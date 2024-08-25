@@ -3,114 +3,117 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Trek } from "../models/trek.model.js";
-import { TrekGuide } from "../models/trekguide.model.js";
 
-const addTrek = asyncHandler(async (req, res) => {
+const addTrek = async (req, res) => {
   const {
     name,
-    subDescription,
+    highlights,
     description,
     location,
-    duration,
     difficulty,
     trekType,
     price,
     startDate,
+    endDate,
     guides,
     images,
   } = req.body;
 
-  if (
-    [
+  try {
+    // Basic validation
+    if (
+      !name ||
+      !highlights ||
+      !description ||
+      !location ||
+      !difficulty ||
+      !price
+    ) {
+      return res
+        .status(400)
+        .json({ error: "All required fields must be provided" });
+    }
+
+    // Create new Trek instance
+    const newTrek = new Trek({
       name,
-      subDescription,
+      highlights,
       description,
       location,
-      duration,
       difficulty,
-      price,
       trekType,
+      price,
+      startDate: startDate || Date.now(),
+      endDate: endDate || Date.now(),
       guides,
-      startDate,
       images,
-    ].some((field) => field?.trim() === "")
-  ) {
-    throw new ApiError(400, "All fields are required");
+    });
+
+    // Save the trek to the database
+    await newTrek.save();
+
+    // Return success response
+    return res.status(201).json(newTrek);
+  } catch (error) {
+    // Handle errors
+    console.error("Error adding trek:", error);
+    return res.status(500).json({ error: "Failed to add trek" });
   }
+};
 
-  const trekImageLocalPaths = req.files?.trekImage.map((file) => file.path);
-  console.log("Local image paths:", trekImageLocalPaths);
-
-  if (!trekImageLocalPaths || trekImageLocalPaths.length === 0) {
-    throw new ApiError(400, "At least one image file is required");
-  }
-
-  const imageOnCloudinaryPromises = trekImageLocalPaths.map(uploadOnCloudinary);
-  const imagesOnCloudinary = await Promise.all(imageOnCloudinaryPromises);
-  console.log("Images uploaded to Cloudinary:", imagesOnCloudinary);
-
-  if (!imagesOnCloudinary.every((image) => image)) {
-    throw new ApiError(400, "One or more image files didn't upload");
-  }
-
-  const trek = await Trek.create({
-    name,
-    subDescription,
-    description,
-    location,
-    duration,
-    difficulty,
-    trekType,
-    price,
-    guides,
-    startDate,
-    images: imagesOnCloudinary.map((image) => image.url),
-  });
-
-  if (!trek) {
-    throw new ApiError(500, "Something went wrong while adding Trek Type");
-  }
-
-  return res
-    .status(201)
-    .json(new ApiResponse(201, trek, "TrekType created successfully"));
-});
-
-const aggregateTrekWithGuides = asyncHandler(async (req, res) => {
-  const trekWithGuide = await Trek.aggregate([
-    {
-      $lookup: {
-        from: "trekguides", // The name of the TrekGuide collection in the database
-        localField: "guides", // The field in the Trek collection that contains references to TrekGuide
-        foreignField: "_id", // The field in the TrekGuide collection to join on
-        as: "guideDetails", // The name of the field to add to the Trek documents with the matched guide details
-      },
-    },
-    {
-      $project: {
-        name: 1,
-        subDescription: 1,
-        description: 1,
-        location: 1,
-        duration: 1,
-        difficulty: 1,
-        trekType: 1,
-        price: 1,
-        startDate: 1,
-        images: 1,
-        guideDetails: {
-          name: 1,
-          bio: 1,
-          experience: 1,
-          images: 1,
+const aggregateTrekForAdmin = asyncHandler(async (req, res) => {
+  try {
+    const trekForAdmin = await Trek.aggregate([
+      {
+        $lookup: {
+          from: "trekguides",
+          localField: "guides",
+          foreignField: "_id",
+          as: "guideDetails",
         },
       },
-    },
-  ]);
+      {
+        $lookup: {
+          from: "trektypes",
+          localField: "trekType",
+          foreignField: "_id",
+          as: "trekTypeDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$trekTypeDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          highlights: 1,
+          description: 1,
+          location: 1,
+          endDate: 1,
+          difficulty: 1,
+          price: 1,
+          startDate: 1,
+          images: 1,
+          guideDetails: {
+            name: 1,
+          },
+          trekTypeDetails: {
+            name: 1,
+          },
+        },
+      },
+    ]);
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, trekWithGuide, "TrekWithGuide successfull"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, trekForAdmin, "Treks successfully fetched"));
+  } catch (error) {
+    console.error("Error fetching trek data for admin:", error);
+    throw new ApiError(500, "An error occurred while fetching the trek data");
+  }
 });
 
-export { addTrek, aggregateTrekWithGuides };
+export { addTrek, aggregateTrekForAdmin };
