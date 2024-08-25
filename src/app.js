@@ -1,15 +1,13 @@
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
 // Create express app
 const app = express();
 
-// Get directory name from import.meta.url
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Define the path to the 'public' directory directly
+const publicPath = path.resolve("public");
 
 // CORS configuration
 const allowedOrigins = ["https://alpha-adventures.onrender.com", "https://alpha-adventures-client.onrender.com"];
@@ -29,7 +27,7 @@ app.use(cors(corsOptions));
 // Middleware
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(publicPath));
 app.use(cookieParser());
 
 // Routes
