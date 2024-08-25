@@ -1,12 +1,18 @@
 import express from "express";
 import path from "path";
+import { fileURLToPath } from "url";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
+// Create express app
 const app = express();
 
-const allowedOrigins = ["https://alpha-adventures.onrender.com", "https://alpha-adventures-client.onrender.com"];
+// Get directory name from import.meta.url
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+// CORS configuration
+const allowedOrigins = ["https://alpha-adventures.onrender.com", "https://alpha-adventures-client.onrender.com"];
 const corsOptions = {
   origin: (origin, callback) => {
     if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
@@ -20,12 +26,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Middleware
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
-
-// Serve static files from 'public' directory
 app.use(express.static(path.join(__dirname, "public")));
-
 app.use(cookieParser());
 
 // Routes
