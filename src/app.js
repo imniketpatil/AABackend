@@ -15,6 +15,7 @@ const corsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
+  methods: ["GET", "POST", "PATCH", "DELETE"], // Specify allowed methods
   credentials: true, // Allow cookies and other credentials to be sent
 };
 
@@ -32,15 +33,11 @@ import trekTypeRouter from "./routes/trektype.routes.js";
 import trekRouter from "./routes/trek.routes.js";
 import testimonialRouter from "./routes/testimonial.routes.js";
 
-//routes declearation
+//routes declaration
 app.use("/api/v1/users", userRouter);
-
 app.use("/api/v1/trekguide", trekGuideRouter);
-
 app.use("/api/v1/trektype", trekTypeRouter);
-
 app.use("/api/v1/trek", trekRouter);
-
 app.use("/api/v1/testimonial", testimonialRouter);
 
 export { app };
