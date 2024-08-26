@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 
 const app = express();
 
-const allowedOrigins = ["https://alpha-adventures.onrender.com", "https://alpha-adventures-client.onrender.com"];
+const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
 
 const corsOptions = {
   origin: (origin, callback) => {
