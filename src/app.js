@@ -5,11 +5,10 @@ import cookieParser from "cookie-parser";
 const app = express();
 
 // Define the allowed origins
-const allowedOrigins = "*";
-// [
-//   "https://alpha-adventures-admin-o0pk5tvip-niket-patils-projects.vercel.app", 
-//   "https://alpha-adventures-client-1re7g09zx-niket-patils-projects.vercel.app"
-// ];
+const allowedOrigins =[
+  "https://alpha-adventures-admin-o0pk5tvip-niket-patils-projects.vercel.app", 
+  "https://alpha-adventures-client-1re7g09zx-niket-patils-projects.vercel.app"
+];
 
 // CORS configuration options
 const corsOptions = {
