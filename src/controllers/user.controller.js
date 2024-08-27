@@ -20,42 +20,27 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  // ? get request from front end
-  // ? validation
-  // ? check if user already exist
-  // ? create user object -- create entry
-  // ? remove password and refresh token
-  // ? check from user creation
-  // ? return res
-
-  const { fullName, username, password, isAdmin } = req.body;
-  // console.log("fullName, username, password", fullName, username, password);
+  const { fullName, username, password } = req.body;
 
   if (
-    [fullName, username, password, isAdmin].some(
-      (field) => field?.trim() === ""
+    [fullName, username, password].some(
+      (field) => typeof field !== "string" || field.trim() === ""
     )
   ) {
-    throw new ApiError(400, "All fields are required");
+    throw new ApiError(400, "All fields are required and must be valid");
   }
 
-  const existedUser = await User.findOne({
-    $or: [{ username }],
-  });
+  const existedUser = await User.findOne({ $or: [{ username }] });
 
   if (existedUser) {
     throw new ApiError(409, "Username Already Exist");
   }
 
-  let user;
-  if (!existedUser) {
-    user = await User.create({
-      fullName,
-      username: username.toLowerCase(),
-      password,
-      isAdmin,
-    });
-  }
+  const user = await User.create({
+    fullName,
+    username: username.toLowerCase(),
+    password,
+  });
 
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
@@ -67,7 +52,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   return res
     .status(201)
-    .json(new ApiResponse(200, createdUser, "User Registed Successfully"));
+    .json(new ApiResponse(200, createdUser, "User Registered Successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -122,7 +107,7 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     req.user._id,
     {
       $set: {
@@ -196,20 +181,35 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
-  const user = await User.findById(req.user?._id);
-  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+  try {
+    const user = await User.findById(req.user?._id);
 
-  if (!isPasswordCorrect) {
-    throw new ApiError(400, "Invalid Old Password");
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+    if (!isPasswordCorrect) {
+      throw new ApiError(400, "Invalid Old Password");
+    }
+
+    // Update user's password
+    user.password = newPassword;
+    await user.save({
+      validateBeforeSave: false, // Avoids schema validation for this operation
+    });
+
+    // Respond with success message
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Password Changed Successfully!"));
+  } catch (error) {
+    // Handle any errors
+    return res
+      .status(error.statusCode || 500)
+      .json(new ApiResponse(error.statusCode || 500, {}, error.message));
   }
-  user.password = newPassword;
-  await user.save({
-    validateBeforeSave: false,
-  });
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "Password Changed Successfully!"));
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
@@ -219,7 +219,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-  const { fullName, username, isAdmin } = req.body;
+  const { fullName, username } = req.body;
 
   // if (!fullName || !username || !isAdmin) {
   //   throw new ApiError(400, "All Fields are Required");
@@ -231,7 +231,6 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
       $set: {
         fullName,
         username,
-        isAdmin,
       },
     },
     { new: true }
@@ -243,13 +242,28 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 });
 
 const deleteAccount = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  await User.findByIdAndDelete(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      },
+    },
+    {
+      new: true,
+    }
+  );
 
-  const user = await User.findByIdAndDelete(id);
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "User Deleted Successfully"));
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "Deleted"));
 });
 
 export {

@@ -10,22 +10,30 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
       req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
-      throw new ApiError(401, "Unauthorized Request");
+      throw new ApiError(401, "Unauthorized Request - No Token Provided");
     }
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-    const user = await User.findById(decodedToken?._id).select(
+    if (!decodedToken?._id) {
+      throw new ApiError(401, "Unauthorized Request - Invalid Token Structure");
+    }
+
+    const user = await User.findById(decodedToken._id).select(
       "-password -refreshToken"
     );
 
     if (!user) {
-      throw new ApiError(401, "Invalid Access Token");
+      throw new ApiError(401, "Unauthorized Request - User Not Found");
     }
 
     req.user = user;
     next();
   } catch (error) {
-    throw new ApiError(401, error?.message || "Invalid Access Token");
+    console.error("JWT Verification Error:", error);
+    throw new ApiError(
+      401,
+      error.message || "Unauthorized Request - Invalid Access Token"
+    );
   }
 });

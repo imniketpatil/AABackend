@@ -1,24 +1,26 @@
-import mongoose, { Schema } from "mongoose";
-import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import mongoose from "mongoose";
+const { Schema } = mongoose;
 
-const trekSchema = new Schema({
-  name: { type: String, required: true },
-  subDescription: { type: String, required: true },
-  description: { type: String, required: true },
-  location: { type: String, required: true },
-  duration: { type: Number, required: true },
-  difficulty: {
-    type: String,
-    enum: ["easy", "moderate", "hard"],
-    required: true,
-  },
+const TrekSchema = new Schema({
+  trekName: { type: String, required: false },
   trekType: { type: Schema.Types.ObjectId, ref: "TrekType", required: false },
-  price: { type: Number, required: true },
-  startDate: { type: Date, default: Date.now },
-  guides: [{ type: Schema.Types.ObjectId, ref: "TrekGuide" }],
-  images: [{ type: String }], // Array of image URLs
+  trekTitle: { type: String, required: false },
+  suitableForAge: { type: String, required: false },
+  altitude: { type: Number, required: false },
+  trekLocation: { type: String, required: false },
+  trekDescription: { type: String, required: false },
+  trekInfo: [{ type: String, required: false }],
+  trekHighlights: [{ type: String, required: false }],
+  trekInclusions: [{ type: String, required: false }],
+  trekExclusions: [{ type: String, required: false }],
+  trekCancellationPolicy: [{ type: String, required: false }],
+  trekDifficulty: {
+    type: String,
+    enum: ["easy", "moderate", "difficult"],
+    required: false,
+  },
+  images: [{ type: String, required: false }],
+  dates: [{ type: Schema.Types.ObjectId, ref: "TrekDate", required: false }],
 });
 
-trekSchema.plugin(mongooseAggregatePaginate);
-
-export const Trek = mongoose.model("Trek", trekSchema);
+export const Trek = mongoose.model("Trek", TrekSchema);

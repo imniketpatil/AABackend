@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
   createTestimonial,
   deleteTestimonial,
+  getAllTestimonial,
+  getAllTestimonials,
   updateTestimonialDetails,
 } from "../controllers/testimonial.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -29,5 +31,9 @@ router.route("/edit-testimonial/:id").patch(
 );
 
 router.route("/this_testimonial/:id").delete(deleteTestimonial);
+
+router.route("/getAllTestimonials").get(getAllTestimonials);
+
+router.route("/getAllTestimonial/:id").get(getAllTestimonial);
 
 export default router;
